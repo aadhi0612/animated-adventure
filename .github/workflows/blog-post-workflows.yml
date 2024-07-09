@@ -15,6 +15,6 @@ jobs:
           echo "Token: ${{ secrets.ACCESS_TOKEN }}"
       - uses: gautamkrishnar/blog-post-workflow@master
         with:
-          max_post_count: "10"
-          feed_list: "https://medium.com/feed/@aadhi0612"
+          max_post_count: "100"
+          feed_list: "https://medium.com/machine-learning-in-practice"
       
