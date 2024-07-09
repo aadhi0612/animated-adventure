@@ -1,0 +1,20 @@
+name: Latest blog post workflow
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 */2 * *"
+jobs:
+  update-readme-with-blog:
+    name: Update this repo's README with latest blog posts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Debug Information
+        run: |
+          echo "Push URL: https://${{ secrets.ACCESS_TOKEN }}@github.com/aadhi0612/aadhi0612.git"
+          echo "Token: ${{ secrets.ACCESS_TOKEN }}"
+      - uses: gautamkrishnar/blog-post-workflow@master
+        with:
+          max_post_count: "10"
+          feed_list: "https://medium.com/feed/@aadhi0612"
+      
