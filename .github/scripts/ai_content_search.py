@@ -64,6 +64,6 @@ def update_readme(google_articles, medium_articles):
 if __name__ == "__main__":
     topic = sys.argv[1]
     tag = sys.argv[2]
-    google_articles = fetch_google_news(topic)
+    google_articles = fetch_google_news_rss(topic)
     medium_articles = fetch_medium(tag)
     update_readme(google_articles, medium_articles)
