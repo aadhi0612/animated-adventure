@@ -18,7 +18,8 @@ def fetch_google_news_rss(topic):
             'link': entry.link,
             'source': 'Google News',
             'published': published.strftime('%B %d, %Y'),
-            'summary': entry.summary
+            'summary': entry.summary,
+            'image_url': 'https://via.placeholder.com/150'  # Placeholder image
         }
         articles.append(article)
     return articles
@@ -30,19 +31,39 @@ def fetch_medium(tag):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
     articles = []
-    for item in soup.find_all('h3', limit=10):  # Limit to top 10 articles
-        link = item.find_parent('a', href=True)
-        if link:
-            article = {
-                'title': item.get_text(strip=True),
-                'link': f'https://medium.com{link["href"]}',
+    for article in soup.select('.postArticle', limit=10):  # Adjust the selector based on actual page structure
+        title_tag = article.find('h3')
+        link_tag = article.find('a', href=True)
+        summary_tag = article.find('h4')
+        image_tag = article.find('img')
+        if title_tag and link_tag:
+            title = title_tag.get_text(strip=True)
+            link = link_tag['href']
+            summary = summary_tag.get_text(strip=True) if summary_tag else 'No summary available'
+            image_url = image_tag['src'] if image_tag else 'https://via.placeholder.com/150'
+            articles.append({
+                'title': title,
+                'link': f'https://medium.com{link}',
                 'source': 'Medium',
-                'summary': item.next_sibling.get_text(strip=True) if item.next_sibling else 'No summary available'
-            }
-            articles.append(article)
-        else:
-            print("Link not found for Medium article")
+                'summary': summary,
+                'image_url': image_url
+            })
     return articles
+
+def format_article(article):
+    return f'''
+    <div style="margin-bottom: 20px;">
+        <a href="{article['link']}" style="text-decoration: none; color: inherit;">
+            <img src="{article['image_url']}" alt="{article['title']}" style="width: 150px; height: 150px; float: left; margin-right: 20px;">
+            <div style="overflow: hidden;">
+                <h3>{article['title']}</h3>
+                <p><small>{article['source']} - Published on {article.get('published', '')}</small></p>
+                <p>{article['summary']}</p>
+            </div>
+        </a>
+        <div style="clear: both;"></div>
+    </div>
+    '''
 
 def update_readme(google_articles, medium_articles):
     print("Updating README with new content")
@@ -53,13 +74,13 @@ def update_readme(google_articles, medium_articles):
             google_end = content.find('<!-- GOOGLE-NEWS-CONTENT:END -->')
             medium_start = content.find('<!-- MEDIUM-CONTENT:START -->') + 29
             medium_end = content.find('<!-- MEDIUM-CONTENT:END -->')
-            spacer = '\n\n'
-            # Format the articles for markdown with additional metadata
-            google_formatted = '\n'.join(f'- [{article["title"]}]({article["link"]}) - Published on {article["published"]} - {article["summary"]}' for article in google_articles)
-            medium_formatted = '\n'.join(f'- [{article["title"]}]({article["link"]}) - {article["summary"]}' for article in medium_articles)
+            
+            # Format the articles with HTML
+            google_formatted = ''.join(format_article(article) for article in google_articles)
+            medium_formatted = ''.join(format_article(article) for article in medium_articles)
             
             # Update the content in the README
-            updated_content = (content[:google_start] + spacer + google_formatted + content[google_end:medium_start] + spacer+ medium_formatted + content[medium_end:])
+            updated_content = (content[:google_start] + google_formatted + content[google_end:medium_start] + medium_formatted + content[medium_end:])
             file.seek(0)
             file.write(updated_content)
             file.truncate()
