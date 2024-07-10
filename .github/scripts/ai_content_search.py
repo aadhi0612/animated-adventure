@@ -10,11 +10,13 @@ def fetch_google_news(topic):
     soup = BeautifulSoup(response.text, 'html.parser')
     articles = []
     for item in soup.find_all('h3', limit=5):  # Limit to top 5 articles
-        article = {
-            'title': item.text,
-            'link': 'https://news.google.com' + item.find('a', href=True)['href'][1:]
-        }
-        articles.append(article)
+        article_link = item.find('a', href=True)
+        if article_link:
+            article = {
+                'title': item.text,
+                'link': 'https://news.google.com' + article_link['href'][1:]
+            }
+            articles.append(article)
     return articles
 
 def fetch_medium(tag):
@@ -24,17 +26,17 @@ def fetch_medium(tag):
     soup = BeautifulSoup(response.text, 'html.parser')
     articles = []
     for item in soup.find_all('h3', limit=5):  # Limit to top 5 articles
-        try:
-            link = item.parent['href']
+        link = item.find_parent('a', href=True)
+        if link:
             article = {
-                'title': item.text,
-                'link': f'https://medium.com{link}'
+                'title': item.get_text(strip=True),
+                'link': f'https://medium.com{link["href"]}'
             }
             articles.append(article)
-        except (AttributeError, TypeError):
-            print("Error parsing Medium article link")
-            continue
+        else:
+            print("Link not found for Medium article")
     return articles
+
 
 def update_readme(articles):
     if not articles:
