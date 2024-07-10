@@ -1,36 +1,53 @@
+# .github/scripts/ai_content_search.py
+import sys
 import requests
 from bs4 import BeautifulSoup
-import re
 
-def search_ai_content():
-    url = "https://news.google.com/search?q=artificial%20intelligence%20when:1d&hl=en-US&gl=US&ceid=US:en"
+def fetch_google_news(topic):
+    url = f'https://news.google.com/search?q={topic}&hl=en-US&gl=US&ceid=US:en'
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
-    articles = soup.find_all('article', class_='MQsxIb')
+    articles = []
+    for item in soup.find_all('h3', limit=5):  # Limit to top 5 articles
+        article = {
+            'title': item.text,
+            'link': 'https://news.google.com' + item.find('a', href=True)['href'][1:]
+        }
+        articles.append(article)
+    return articles
 
-    results = []
-    for article in articles[:5]:  # Get top 5 results
-        title = article.find('h3', class_='ipQwMb').text
-        link = "https://news.google.com" + article.find('a', class_='VDXfz')['href'][1:]
-        results.append(f"- [{title}]({link})")
+def fetch_medium(tag):
+    url = f'https://medium.com/tag/{tag}/latest'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    articles = []
+    for item in soup.find_all('h3', limit=5):  # Limit to top 5 articles
+        try:
+            link = item.parent['href']
+        except KeyError:
+            continue
+        article = {
+            'title': item.text,
+            'link': f'https://medium.com{link}'
+        }
+        articles.append(article)
+    return articles
 
-    return "\n".join(results)
-
-def update_readme(content):
-    with open('README.md', 'r') as file:
-        readme = file.read()
-
-    start_marker = "<!-- AI-CONTENT-LIST:START -->"
-    end_marker = "<!-- AI-CONTENT-LIST:END -->"
-
-    pattern = f"{start_marker}.*?{end_marker}"
-    replacement = f"{start_marker}\n## Latest AI News\n{content}\n{end_marker}"
-    
-    updated_readme = re.sub(pattern, replacement, readme, flags=re.DOTALL)
-
-    with open('README.md', 'w') as file:
-        file.write(updated_readme)
+def update_readme(articles):
+    with open('README.md', 'r+') as file:
+        content = file.read()
+        start = content.find('<!-- AI-CONTENT-LIST:START -->') + 30
+        end = content.find('<!-- AI-CONTENT-LIST:END -->')
+        article_list = '\n'.join(f'- [{article["title"]}]({article["link"]})' for article in articles)
+        updated_content = content[:start] + article_list + content[end:]
+        file.seek(0)
+        file.write(updated_content)
+        file.truncate()
 
 if __name__ == "__main__":
-    ai_content = search_ai_content()
-    update_readme(ai_content)
+    topic = sys.argv[1]
+    tag = sys.argv[2]
+    google_articles = fetch_google_news(topic)
+    medium_articles = fetch_medium(tag)
+    all_articles = google_articles + medium_articles
+    update_readme(all_articles)
