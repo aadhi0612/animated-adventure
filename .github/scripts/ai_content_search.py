@@ -2,22 +2,20 @@
 import sys
 import requests
 from bs4 import BeautifulSoup
+import feedparser
 
-def fetch_google_news(topic):
-    print(f"Fetching news for topic: {topic}")
-    url = f'https://news.google.com/search?q={topic}&hl=en-US&gl=US&ceid=US:en'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+def fetch_google_news_rss(topic):
+    print(f"Fetching news via RSS for topic: {topic}")
+    url = f'https://news.google.com/rss/search?q={topic}&hl=en-US&gl=US&ceid=US:en'
+    feed = feedparser.parse(url)
     articles = []
-    for item in soup.find_all('h3', limit=5):  # Limit to top 5 articles
-        article_link = item.find('a', href=True)
-        if article_link:
-            article = {
-                'title': item.text,
-                'link': 'https://news.google.com' + article_link['href'][1:],
-                'source': 'Google News'  # Additional detail can be scraped here if available
-            }
-            articles.append(article)
+    for entry in feed.entries[:5]:  # Limit to top 5 articles
+        article = {
+            'title': entry.title,
+            'link': entry.link,
+            'source': 'Google News'
+        }
+        articles.append(article)
     return articles
 
 def fetch_medium(tag):
