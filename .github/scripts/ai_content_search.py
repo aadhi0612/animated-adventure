@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import feedparser
 
 def fetch_google_news_rss(topic):
+    topic = topic.replace(' ', '+')
     print(f"Fetching news via RSS for topic: {topic}")
     url = f'https://news.google.com/rss/search?q={topic}&hl=en-US&gl=US&ceid=US:en'
     feed = feedparser.parse(url)
@@ -18,7 +19,8 @@ def fetch_google_news_rss(topic):
         articles.append(article)
     return articles
 
-def fetch_medium(tag):
+def fetch_medium(tag): 
+    tag = tag.replace(' ', '-')
     print(f"Fetching Medium articles for tag: {tag}")
     url = f'https://medium.com/tag/{tag}/latest'
     response = requests.get(url)
