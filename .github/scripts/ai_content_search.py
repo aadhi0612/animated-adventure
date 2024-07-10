@@ -46,14 +46,13 @@ def update_readme(google_articles, medium_articles):
             google_end = content.find('<!-- GOOGLE-NEWS-CONTENT:END -->')
             medium_start = content.find('<!-- MEDIUM-CONTENT:START -->') + 29
             medium_end = content.find('<!-- MEDIUM-CONTENT:END -->')
-            
+            spacer = '\n\n'
             # Format the articles for markdown
             google_formatted = '\n'.join(f'- [{article["title"]}]({article["link"]})' for article in google_articles)
             medium_formatted = '\n'.join(f'- [{article["title"]}]({article["link"]})' for article in medium_articles)
             
             # Update the content in the README
-            updated_content = (content[:google_start] + google_formatted + content[google_end:medium_start] 
-                               + medium_formatted + content[medium_end:])
+            updated_content = (content[:google_start] + spacer + google_formatted + content[google_end:medium_start] + spacer+ medium_formatted + content[medium_end:])
             file.seek(0)
             file.write(updated_content)
             file.truncate()
