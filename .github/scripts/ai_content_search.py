@@ -14,7 +14,8 @@ def fetch_google_news(topic):
         if article_link:
             article = {
                 'title': item.text,
-                'link': 'https://news.google.com' + article_link['href'][1:]
+                'link': 'https://news.google.com' + article_link['href'][1:],
+                'source': 'Google News'  # Additional detail can be scraped here if available
             }
             articles.append(article)
     return articles
@@ -30,29 +31,31 @@ def fetch_medium(tag):
         if link:
             article = {
                 'title': item.get_text(strip=True),
-                'link': f'https://medium.com{link["href"]}'
+                'link': f'https://medium.com{link["href"]}',
+                'source': 'Medium'  # This ensures we know the source right in the script
             }
             articles.append(article)
         else:
             print("Link not found for Medium article")
     return articles
 
-
-def update_readme(articles):
-    if not articles:
-        print("No articles to update")
-        return
+def update_readme(google_articles, medium_articles):
     print("Updating README with new content")
     try:
         with open('README.md', 'r+') as file:
             content = file.read()
-            start = content.find('<!-- AI-CONTENT-LIST:START -->') + 30
-            end = content.find('<!-- AI-CONTENT-LIST:END -->')
-            if start == 29 or end == -1:
-                print("Content placeholders not found in README")
-                return
-            article_list = '\n'.join(f'- [{article["title"]}]({article["link"]})' for article in articles)
-            updated_content = content[:start] + article_list + content[end:]
+            google_start = content.find('<!-- GOOGLE-NEWS-CONTENT:START -->') + 34
+            google_end = content.find('<!-- GOOGLE-NEWS-CONTENT:END -->')
+            medium_start = content.find('<!-- MEDIUM-CONTENT:START -->') + 29
+            medium_end = content.find('<!-- MEDIUM-CONTENT:END -->')
+            
+            # Format the articles for markdown
+            google_formatted = '\n'.join(f'- [{article["title"]}]({article["link"]})' for article in google_articles)
+            medium_formatted = '\n'.join(f'- [{article["title"]}]({article["link"]})' for article in medium_articles)
+            
+            # Update the content in the README
+            updated_content = (content[:google_start] + google_formatted + content[google_end:medium_start] 
+                               + medium_formatted + content[medium_end:])
             file.seek(0)
             file.write(updated_content)
             file.truncate()
@@ -65,5 +68,4 @@ if __name__ == "__main__":
     tag = sys.argv[2]
     google_articles = fetch_google_news(topic)
     medium_articles = fetch_medium(tag)
-    all_articles = google_articles + medium_articles
-    update_readme(all_articles)
+    update_readme(google_articles, medium_articles)
