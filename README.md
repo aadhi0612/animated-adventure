@@ -98,24 +98,24 @@
     </div>
     
     <div style="margin-bottom: 20px;">
-        <a href="https://news.google.com/rss/articles/CBMiYWh0dHBzOi8vd3d3LmVjb25vbWlzdC5jb20vc3BlY2lhbC1yZXBvcnQvMjAyNC8wNy8wNy93aWxsLWFydGlmaWNpYWwtaW50ZWxsaWdlbmNlLXRyYW5zZm9ybS1zY2hvb2zSAQA?oc=5" style="text-decoration: none; color: inherit;">
-            <img src="https://via.placeholder.com/150" alt="Will artificial intelligence transform school? - The Economist" style="width: 150px; height: 150px; float: left; margin-right: 20px;">
-            <div style="overflow: hidden;">
-                <h3>Will artificial intelligence transform school? - The Economist</h3>
-                <p><small>Google News - Published on July 07, 2024</small></p>
-                <p><a href="https://news.google.com/rss/articles/CBMiYWh0dHBzOi8vd3d3LmVjb25vbWlzdC5jb20vc3BlY2lhbC1yZXBvcnQvMjAyNC8wNy8wNy93aWxsLWFydGlmaWNpYWwtaW50ZWxsaWdlbmNlLXRyYW5zZm9ybS1zY2hvb2zSAQA?oc=5" target="_blank">Will artificial intelligence transform school?</a>&nbsp;&nbsp;<font color="#6f6f6f">The Economist</font></p>
-            </div>
-        </a>
-        <div style="clear: both;"></div>
-    </div>
-    
-    <div style="margin-bottom: 20px;">
         <a href="https://news.google.com/rss/articles/CBMiaWh0dHBzOi8vZm9yZWlnbnBvbGljeS5jb20vMjAyNC8wNy8wOC9hcnRpZmljaWFsLWludGVsbGlnZW5jZS1haS1lbGVjdGlvbi1taXNpbmZvcm1hdGlvbi10ZWNobm9sb2d5LXJpc2tzL9IBAA?oc=5" style="text-decoration: none; color: inherit;">
             <img src="https://via.placeholder.com/150" alt="Red Teaming Isn’t Enough - Foreign Policy" style="width: 150px; height: 150px; float: left; margin-right: 20px;">
             <div style="overflow: hidden;">
                 <h3>Red Teaming Isn’t Enough - Foreign Policy</h3>
                 <p><small>Google News - Published on July 08, 2024</small></p>
                 <p><a href="https://news.google.com/rss/articles/CBMiaWh0dHBzOi8vZm9yZWlnbnBvbGljeS5jb20vMjAyNC8wNy8wOC9hcnRpZmljaWFsLWludGVsbGlnZW5jZS1haS1lbGVjdGlvbi1taXNpbmZvcm1hdGlvbi10ZWNobm9sb2d5LXJpc2tzL9IBAA?oc=5" target="_blank">Red Teaming Isn’t Enough</a>&nbsp;&nbsp;<font color="#6f6f6f">Foreign Policy</font></p>
+            </div>
+        </a>
+        <div style="clear: both;"></div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="https://news.google.com/rss/articles/CBMikQFodHRwczovL3d3dy5taWxpdGFyeS5jb20vZGFpbHktbmV3cy8yMDI0LzA3LzA5L2FybXktYWR2b2NhdGVzLXVzZS1vZi1nZW5lcmF0aXZlLWFydGlmaWNpYWwtaW50ZWxsaWdlbmNlLXNvbGRpZXJzLW90aGVyLXNlcnZpY2VzLWFyZS1oZXNpdGFudC5odG1s0gGVAWh0dHBzOi8vd3d3Lm1pbGl0YXJ5LmNvbS9kYWlseS1uZXdzLzIwMjQvMDcvMDkvYXJteS1hZHZvY2F0ZXMtdXNlLW9mLWdlbmVyYXRpdmUtYXJ0aWZpY2lhbC1pbnRlbGxpZ2VuY2Utc29sZGllcnMtb3RoZXItc2VydmljZXMtYXJlLWhlc2l0YW50Lmh0bWw_YW1w?oc=5" style="text-decoration: none; color: inherit;">
+            <img src="https://via.placeholder.com/150" alt="Army Advocates Use of Generative Artificial Intelligence by Soldiers as Other Services Are Hesitant - Military.com" style="width: 150px; height: 150px; float: left; margin-right: 20px;">
+            <div style="overflow: hidden;">
+                <h3>Army Advocates Use of Generative Artificial Intelligence by Soldiers as Other Services Are Hesitant - Military.com</h3>
+                <p><small>Google News - Published on July 09, 2024</small></p>
+                <p><a href="https://news.google.com/rss/articles/CBMikQFodHRwczovL3d3dy5taWxpdGFyeS5jb20vZGFpbHktbmV3cy8yMDI0LzA3LzA5L2FybXktYWR2b2NhdGVzLXVzZS1vZi1nZW5lcmF0aXZlLWFydGlmaWNpYWwtaW50ZWxsaWdlbmNlLXNvbGRpZXJzLW90aGVyLXNlcnZpY2VzLWFyZS1oZXNpdGFudC5odG1s0gGVAWh0dHBzOi8vd3d3Lm1pbGl0YXJ5LmNvbS9kYWlseS1uZXdzLzIwMjQvMDcvMDkvYXJteS1hZHZvY2F0ZXMtdXNlLW9mLWdlbmVyYXRpdmUtYXJ0aWZpY2lhbC1pbnRlbGxpZ2VuY2Utc29sZGllcnMtb3RoZXItc2VydmljZXMtYXJlLWhlc2l0YW50Lmh0bWw_YW1w?oc=5" target="_blank">Army Advocates Use of Generative Artificial Intelligence by Soldiers as Other Services Are Hesitant</a>&nbsp;&nbsp;<font color="#6f6f6f">Military.com</font></p>
             </div>
         </a>
         <div style="clear: both;"></div>
