@@ -10,9 +10,11 @@
 | [Army Advocates Use of Generative Artificial Intelligence by Soldiers as Other Services Are Hesitant - Military.com](https://news.google.com/rss/articles/CBMikQFodHRwczovL3d3dy5taWxpdGFyeS5jb20vZGFpbHktbmV3cy8yMDI0LzA3LzA5L2FybXktYWR2b2NhdGVzLXVzZS1vZi1nZW5lcmF0aXZlLWFydGlmaWNpYWwtaW50ZWxsaWdlbmNlLXNvbGRpZXJzLW90aGVyLXNlcnZpY2VzLWFyZS1oZXNpdGFudC5odG1s0gGVAWh0dHBzOi8vd3d3Lm1pbGl0YXJ5LmNvbS9kYWlseS1uZXdzLzIwMjQvMDcvMDkvYXJteS1hZHZvY2F0ZXMtdXNlLW9mLWdlbmVyYXRpdmUtYXJ0aWZpY2lhbC1pbnRlbGxpZ2VuY2Utc29sZGllcnMtb3RoZXItc2VydmljZXMtYXJlLWhlc2l0YW50Lmh0bWw_YW1w?oc=5) | July 09, 2024 |
 | [Red Teaming Isn’t Enough - Foreign Policy](https://news.google.com/rss/articles/CBMiaWh0dHBzOi8vZm9yZWlnbnBvbGljeS5jb20vMjAyNC8wNy8wOC9hcnRpZmljaWFsLWludGVsbGlnZW5jZS1haS1lbGVjdGlvbi1taXNpbmZvcm1hdGlvbi10ZWNobm9sb2d5LXJpc2tzL9IBAA?oc=5) | July 08, 2024 |
 | [Artificial Intelligence Boom Lifts Paychecks for CIOs - The Wall Street Journal](https://news.google.com/rss/articles/CBMiW2h0dHBzOi8vd3d3Lndzai5jb20vYXJ0aWNsZXMvYXJ0aWZpY2lhbC1pbnRlbGxpZ2VuY2UtYm9vbS1saWZ0cy1wYXljaGVja3MtZm9yLWNpb3MtZTE1MjdlYWLSAQA?oc=5) | July 08, 2024 |
-| [Defeated by A.I., a Legend in the Board Game Go Warns: Get Ready for What’s Next - The New York Times](https://news.google.com/rss/articles/CBMiQ2h0dHBzOi8vd3d3Lm55dGltZXMuY29tLzIwMjQvMDcvMTAvd29ybGQvYXNpYS9sZWUtc2FlZG9sLWdvLWFpLmh0bWzSAQA?oc=5) | July 10, 2024 |<!-- GOOGLE-NEWS-CONTENT:END -->
+| [Defeated by A.I., a Legend in the Board Game Go Warns: Get Ready for What’s Next - The New York Times](https://news.google.com/rss/articles/CBMiQ2h0dHBzOi8vd3d3Lm55dGltZXMuY29tLzIwMjQvMDcvMTAvd29ybGQvYXNpYS9sZWUtc2FlZG9sLWdvLWFpLmh0bWzSAQA?oc=5) | July 10, 2024 |
+<!-- GOOGLE-NEWS-CONTENT:END -->
 
 ### Medium Blogs:
 <!-- MEDIUM-CONTENT:START -->| Title | Published Date |
 |-------|----------------|
+
 <!-- MEDIUM-CONTENT:END -->
