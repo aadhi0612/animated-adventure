@@ -41,13 +41,16 @@ def fetch_medium(tag):
             articles.append({
                 'title': title,
                 'link': f'https://medium.com{link}',
-                'source': 'Medium',
-                'summary': summary
+                'source': 'Medium'
             })
     return articles
 
 def format_article_table_row(article):
-    return f"| [{article['title']}]({article['link']}) | {article.get('published', 'No date available')} |"
+    published = article.get('published', '')
+    if published:
+        return f"| [{article['title']}]({article['link']}) | {published} |"
+    else:
+        return f"| [{article['title']}]({article['link']}) | |"
 
 def update_readme(google_articles, medium_articles):
     print("Updating README with new content")
@@ -67,7 +70,7 @@ def update_readme(google_articles, medium_articles):
             table_header = "| Title | Published Date |\n|-------|----------------|\n"
             
             # Update the content in the README
-            updated_content = (content[:google_start] + table_header + google_formatted + content[google_end:medium_start] + table_header + medium_formatted + content[medium_end:])
+            updated_content = (content[:google_start] + table_header + google_formatted + '\n' + content[google_end:medium_start] + table_header + medium_formatted + '\n' + content[medium_end:])
             file.seek(0)
             file.write(updated_content)
             file.truncate()
