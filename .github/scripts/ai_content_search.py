@@ -55,9 +55,11 @@ def format_article(article):
     <div style="margin-bottom: 20px;">
         <a href="{article['link']}" style="text-decoration: none; color: inherit;">
             <img src="{article['image_url']}" alt="{article['title']}" style="width: 150px; height: 150px; float: left; margin-right: 20px;">
-            <h3>{article['title']}</h3>
-            <p><small>{article['source']} - Published on {article.get('published', '')}</small></p>
-            <p>{article['summary']}</p>
+            <div style="overflow: hidden;">
+                <h3>{article['title']}</h3>
+                <p><small>{article['source']} - Published on {article.get('published', '')}</small></p>
+                <p>{article['summary']}</p>
+            </div>
         </a>
         <div style="clear: both;"></div>
     </div>
@@ -76,9 +78,9 @@ def update_readme(google_articles, medium_articles):
             # Format the articles with HTML
             google_formatted = ''.join(format_article(article) for article in google_articles)
             medium_formatted = ''.join(format_article(article) for article in medium_articles)
-            
+            spacer = "\n \n"
             # Update the content in the README
-            updated_content = (content[:google_start] + google_formatted + content[google_end:medium_start] + medium_formatted + content[medium_end:])
+            updated_content = (content[:google_start] + spacer + google_formatted + content[google_end:medium_start] + spacer + medium_formatted + content[medium_end:])
             file.seek(0)
             file.write(updated_content)
             file.truncate()
