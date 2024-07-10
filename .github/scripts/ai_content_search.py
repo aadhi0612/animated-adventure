@@ -10,7 +10,7 @@ def fetch_google_news_rss(topic):
     url = f'https://news.google.com/rss/search?q={topic}&hl=en-US&gl=US&ceid=US:en'
     feed = feedparser.parse(url)
     articles = []
-    for entry in feed.entries[:5]:  # Limit to top 5 articles
+    for entry in feed.entries[:20]:  # Limit to top 20 articles
         article = {
             'title': entry.title,
             'link': entry.link,
@@ -26,7 +26,7 @@ def fetch_medium(tag):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
     articles = []
-    for item in soup.find_all('h3', limit=5):  # Limit to top 5 articles
+    for item in soup.find_all('h3', limit=20):  # Limit to top 20 articles
         link = item.find_parent('a', href=True)
         if link:
             article = {
