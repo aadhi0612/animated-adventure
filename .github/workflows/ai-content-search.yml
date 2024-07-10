@@ -11,7 +11,6 @@ on:
         description: 'Medium tag for additional articles'
         required: true
         default: 'machine-learning'
-
   schedule:
     - cron: '0 0 * * *'  # Runs every day at midnight
 
@@ -20,19 +19,22 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-    - uses: actions/checkout@v2
-
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
-
+        python-version: '3.x'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install requests beautifulsoup4
-
     - name: Fetch and Update README
-      run: python .github/scripts/ai_content_search.py ${{ github.event.inputs.search_topic }} ${{ github.event.inputs.medium_tag }}
+      run: |
+        python .github/scripts/ai_content_search.py "${{ github.event.inputs.search_topic || 'artificial intelligence' }}" "${{ github.event.inputs.medium_tag || 'machine-learning' }}"
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add README.md
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update AI content in README" && git push)
