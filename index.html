@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Aahaan — AI Lab &amp; Portfolio</title>
+<meta name="description" content="An interactive AI laboratory: tokens, embeddings, parameters, attention and sampling — real math you can touch in 3D." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2306070c'/%3E%3Ctext x='32' y='42' font-family='monospace' font-size='30' font-weight='700' fill='%237ee3ff' text-anchor='middle'%3EAI%3C/text%3E%3C/svg%3E" />
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./js/vendor/three/build/three.module.js",
+    "three/addons/": "./js/vendor/three/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div class="noise-overlay" aria-hidden="true"></div>
+
+<header class="site-header">
+  <a href="#top" class="brand" aria-label="Home">
+    <span class="brand-mark">AI</span><span class="brand-name">Lab</span>
+  </a>
+  <nav class="site-nav" aria-label="Primary">
+    <a href="#lab">Lab</a>
+    <a href="#about">About</a>
+    <a href="#news">Frontier</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="hero">
+    <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-inner reveal">
+      <p class="eyebrow">Interactive AI Laboratory · Portfolio</p>
+      <h1 class="hero-title">
+        <span>Hi, I'm <span class="grad-text">Aahaan</span>.</span>
+        <span>I make AI <span class="grad-text">observable</span>.</span>
+      </h1>
+      <p class="hero-sub">
+        Five real, running simulations — tokenization, embeddings, a trainable neuron,
+        attention, and temperature sampling — rebuilt in 3D so you can change a variable
+        and watch the actual math respond.
+      </p>
+      <div class="hero-actions">
+        <a href="#lab" class="btn btn-primary">Enter the Lab</a>
+        <a href="#about" class="btn btn-ghost">About me</a>
+      </div>
+    </div>
+    <div class="scroll-hint" aria-hidden="true"><span></span></div>
+  </section>
+
+  <!-- ============ LAB GRID ============ -->
+  <section class="lab-section" id="lab">
+    <div class="section-head reveal">
+      <p class="eyebrow">01 — The Lab</p>
+      <h2>Five rooms. Real math. No fake animations.</h2>
+      <p class="section-lede">
+        Every control below changes an actual variable in a live computation —
+        not a pre-baked video. Pick a room to start a mission.
+      </p>
+    </div>
+    <div class="lab-grid" id="labGrid"><!-- injected by main.js --></div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="about-section" id="about">
+    <div class="about-grid">
+      <div class="reveal">
+        <p class="eyebrow">02 — About</p>
+        <h2>Building systems that explain themselves.</h2>
+        <p class="about-bio" id="aboutBio"></p>
+        <ul class="skill-tags" id="skillTags"></ul>
+        <div class="hero-actions">
+          <a href="#contact" class="btn btn-primary">Get in touch</a>
+        </div>
+      </div>
+      <div class="about-card reveal">
+        <div class="stat-row">
+          <div class="stat"><span class="stat-num">5</span><span class="stat-label">running simulations</span></div>
+          <div class="stat"><span class="stat-num">100%</span><span class="stat-label">real computed math</span></div>
+          <div class="stat"><span class="stat-num">0</span><span class="stat-label">build steps required</span></div>
+        </div>
+        <p class="about-note">
+          Every module here follows one rule: if the UI shows it moving, a real number
+          moved behind it. Temperature really rescales logits. Weights really update via
+          gradient descent. Attention scores are really computed from Q·Kᵀ.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FRONTIER NEWS ============ -->
+  <section class="news-section" id="news">
+    <div class="section-head reveal">
+      <p class="eyebrow">03 — Frontier Observatory</p>
+      <h2>What's actually changed lately — mapped back to concepts.</h2>
+      <p class="section-lede">
+        Curated, source-linked. Each card ties a real 2026 release to the lab room that
+        teaches the subsystem it improved.
+      </p>
+    </div>
+    <div class="news-grid" id="newsGrid"><!-- injected by main.js --></div>
+  </section>
+
+  <!-- ============ CONTACT ============ -->
+  <section class="contact-section" id="contact">
+    <div class="contact-card reveal">
+      <p class="eyebrow">04 — Contact</p>
+      <h2>Let's build something that moves.</h2>
+      <p class="section-lede">Open to collaborations, roles, and interesting problems.</p>
+      <div class="hero-actions" id="contactLinks"><!-- injected by main.js --></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>&copy; <span id="year"></span> <span id="footerName"></span>. Built with Three.js — no framework, no build step.</p>
+</footer>
+
+<!-- ============ LAB OVERLAY (shared shell for all simulations) ============ -->
+<div class="lab-overlay" id="labOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="lab-overlay-bar">
+    <div class="lab-overlay-title">
+      <span class="lab-overlay-icon" id="labIcon"></span>
+      <div>
+        <h3 id="labTitle"></h3>
+        <p id="labMission"></p>
+      </div>
+    </div>
+    <button class="lab-close" id="labClose" aria-label="Close lab">&times;</button>
+  </div>
+  <div class="lab-overlay-body">
+    <div class="lab-canvas-wrap" id="labCanvasWrap"></div>
+    <div class="lab-controls" id="labControls"></div>
+  </div>
+  <div class="lab-status" id="labStatus" role="status" aria-live="polite"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
