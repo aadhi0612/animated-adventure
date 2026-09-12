@@ -1,12 +1,12 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, seededRandom } from "./stage.js";
+import { createStage, makeTextSprite, seededRandom, makeDraggable } from "./stage.js";
 
 export const meta = {
   id: "vectors",
   icon: "🧭",
   title: "Vector Observatory",
-  tagline: "32 toy word embeddings in 8 dimensions, projected into 3D. Click a word to see its real nearest neighbors by cosine similarity.",
-  mission: "Click a word and confirm its nearest neighbor (by cosine similarity) belongs to the same category.",
+  tagline: "32 toy word embeddings, each one literally IS its 3D position — no hidden dimensions. Grab a word and drag it and its real cosine-similarity neighbors update live.",
+  mission: "Drag a word out of its own cluster and into another until its nearest neighbor belongs to a different category — you're reshaping real cosine similarity by hand.",
 };
 
 const CATEGORIES = [
@@ -16,22 +16,34 @@ const CATEGORIES = [
   { name: "tech", hue: 165, words: ["computer", "algorithm", "network", "model", "data", "code", "robot", "chip"] },
 ];
 
-const DIMS = 8;
+const DIMS = 3;
 
-// Build reproducible 8-D "toy" embeddings: each category gets a fixed random
-// center, each word is that center plus small noise. This is an honest toy —
-// real embeddings are learned from data, not authored — but cosine similarity
-// on the result behaves the same way and is computed for real, live.
+// Build reproducible 3-D "toy" embeddings: each category gets a fixed random
+// center, each word is that center plus small noise. Unlike a real embedding
+// model (hundreds/thousands of dimensions, only ever viewable as a lossy
+// projection), this toy vector's 3 dimensions ARE its full representation —
+// so dragging a point in 3D changes 100% of what cosine similarity sees,
+// not just a projected slice of it.
+// Tetrahedron-corner sign patterns: each category center points in a
+// genuinely distinct direction from the origin (pairwise angle ~109.5°),
+// so "close in space" and "cosine-similar" agree with each other — dragging
+// a point visually toward a cluster actually raises its cosine similarity
+// to that cluster, instead of two categories accidentally sharing a direction.
+const CATEGORY_DIRS = [
+  [1, 1, -1],
+  [1, -1, 1],
+  [-1, 1, 1],
+  [-1, -1, -1],
+];
+
 function buildEmbeddings(seed = 7) {
   const rand = seededRandom(seed);
   const words = [];
   CATEGORIES.forEach((cat, ci) => {
-    const center = Array.from({ length: DIMS }, (_, d) => {
-      const axisBoost = d < 3 ? (ci - 1.5) * 1.6 : 0; // separate categories along first 3 dims for a legible 3D projection
-      return axisBoost + (rand() - 0.5) * 1.4;
-    });
+    const dir = CATEGORY_DIRS[ci];
+    const center = dir.map((s) => s * 1.8 + (rand() - 0.5) * 0.4);
     cat.words.forEach((w) => {
-      const vec = center.map((c) => c + (rand() - 0.5) * 0.9);
+      const vec = center.map((c) => c + (rand() - 0.5) * 0.6);
       words.push({ word: w, category: cat.name, hue: cat.hue, vec });
     });
   });
@@ -118,42 +130,56 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
         .map(({ n, sim }) => `<div class="readout"><span>${n.data.word} <em style="opacity:.6">(${n.data.category})</em></span><b>${sim.toFixed(3)}</b></div>`)
         .join("");
 
-    const topNeighborSameCategory = top.length > 0 && top[0].n.data.category === node.data.category;
-    setMissionComplete(topNeighborSameCategory);
+    const topNeighborDifferentCategory = top.length > 0 && top[0].n.data.category !== node.data.category;
+    setMissionComplete(topNeighborDifferentCategory);
     setStatus(
-      topNeighborSameCategory
-        ? `Mission complete — "${top[0].n.data.word}" shares category "${node.data.category}" with cosine similarity ${top[0].sim.toFixed(3)}.`
-        : `Nearest neighbor "${top[0]?.n.data.word}" is in a different category — try another word.`
+      topNeighborDifferentCategory
+        ? `Mission complete — you dragged "${node.data.word}" close enough that "${top[0].n.data.word}" (${top[0].n.data.category}) is now its nearest neighbor.`
+        : `Nearest neighbor "${top[0]?.n.data.word}" is still in the same category (${node.data.category}) — drag further.`
     );
   }
 
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
-  function onClick(e) {
-    const rect = stage.renderer.domElement.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(pointer, stage.camera);
-    const hits = raycaster.intersectObjects(nodes.map((n) => n.mesh));
-    if (hits.length) selectNode(nodes.find((n) => n.mesh === hits[0].object));
-  }
-  stage.renderer.domElement.addEventListener("pointerdown", onClick);
+  const drag = makeDraggable(
+    stage,
+    () => nodes.map((n) => n.mesh),
+    {
+      onStart(mesh) {
+        const node = nodes.find((n) => n.mesh === mesh);
+        if (node) selectNode(node);
+      },
+      onDrag(mesh, worldTarget) {
+        const node = nodes.find((n) => n.mesh === mesh);
+        if (!node) return;
+        const local = group.worldToLocal(worldTarget.clone()).clampScalar(-4.5, 4.5);
+        mesh.position.copy(local);
+        node.label.position.copy(local).add(new THREE.Vector3(0, 0.26, 0));
+        node.data.vec[0] = local.x / 1.1;
+        node.data.vec[1] = local.y / 1.1;
+        node.data.vec[2] = local.z / 1.1;
+        selectNode(node);
+      },
+    }
+  );
 
   controlsEl.querySelector("#vec-reset-cam").addEventListener("click", () => {
     stage.camera.position.set(7, 5, 9);
     stage.orbit.target.set(0, 0, 0);
   });
 
-  setStatus("Click any point to inspect its real cosine-similarity neighbors.");
+  setStatus("Grab any point and drag it — its neighbors recompute live from real cosine similarity.");
+  let idleSpin = true;
+  stage.renderer.domElement.addEventListener("pointerdown", () => { idleSpin = false; });
   stage.onFrame.push(() => {
-    group.rotation.y += 0.0009;
-    beamGroup.rotation.y += 0.0009;
+    if (idleSpin) {
+      group.rotation.y += 0.0009;
+      beamGroup.rotation.y += 0.0009;
+    }
   });
   stage.start();
 
   return {
     dispose() {
-      stage.renderer.domElement.removeEventListener("pointerdown", onClick);
+      drag.dispose();
       stage.dispose();
     },
   };

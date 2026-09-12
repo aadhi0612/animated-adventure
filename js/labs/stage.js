@@ -135,3 +135,77 @@ export function colorForIndex(i, n) {
   const hue = (i / Math.max(n, 1)) * 300;
   return new THREE.Color(`hsl(${hue}, 70%, 62%)`);
 }
+
+// Makes a set of meshes grabbable with the mouse/touch: pointerdown on a
+// target starts a drag, movement is projected onto a plane facing the camera
+// through the object's current position (so it tracks naturally under the
+// cursor), and orbit controls are suspended for the duration of the drag.
+// This is the core "play with your hands" interaction used by every lab.
+export function makeDraggable(stage, targets, { onStart, onDrag, onEnd } = {}) {
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  const plane = new THREE.Plane();
+  const planeHit = new THREE.Vector3();
+  const offset = new THREE.Vector3();
+  const dom = stage.renderer.domElement;
+  let dragging = null;
+
+  function toNDC(e) {
+    const rect = dom.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  }
+
+  function onPointerDown(e) {
+    toNDC(e);
+    raycaster.setFromCamera(pointer, stage.camera);
+    const list = typeof targets === "function" ? targets() : targets;
+    const hits = raycaster.intersectObjects(list);
+    if (!hits.length) return;
+    dragging = hits[0].object;
+    dom.setPointerCapture(e.pointerId);
+    if (stage.orbit) stage.orbit.enabled = false;
+
+    const camDir = new THREE.Vector3();
+    stage.camera.getWorldDirection(camDir);
+    plane.setFromNormalAndCoplanarPoint(camDir, dragging.position);
+    raycaster.ray.intersectPlane(plane, planeHit);
+    offset.copy(planeHit).sub(dragging.position);
+
+    onStart && onStart(dragging);
+    dom.style.cursor = "grabbing";
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+    toNDC(e);
+    raycaster.setFromCamera(pointer, stage.camera);
+    if (raycaster.ray.intersectPlane(plane, planeHit)) {
+      const target = planeHit.sub(offset);
+      onDrag && onDrag(dragging, target);
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!dragging) return;
+    dom.releasePointerCapture(e.pointerId);
+    if (stage.orbit) stage.orbit.enabled = true;
+    dom.style.cursor = "";
+    onEnd && onEnd(dragging);
+    dragging = null;
+  }
+
+  dom.addEventListener("pointerdown", onPointerDown);
+  dom.addEventListener("pointermove", onPointerMove);
+  dom.addEventListener("pointerup", onPointerUp);
+  dom.addEventListener("pointercancel", onPointerUp);
+
+  return {
+    dispose() {
+      dom.removeEventListener("pointerdown", onPointerDown);
+      dom.removeEventListener("pointermove", onPointerMove);
+      dom.removeEventListener("pointerup", onPointerUp);
+      dom.removeEventListener("pointercancel", onPointerUp);
+    },
+  };
+}

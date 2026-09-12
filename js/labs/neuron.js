@@ -1,15 +1,19 @@
 import * as THREE from "three";
-import { createStage, seededRandom } from "./stage.js";
+import { createStage, seededRandom, makeDraggable } from "./stage.js";
 
 export const meta = {
   id: "neuron",
   icon: "🧠",
   title: "Neural Workshop",
-  tagline: "A single trainable neuron. Drag its weights or run real gradient descent and watch the decision surface — and the loss — respond.",
+  tagline: "A single trainable neuron. Grab the glowing handle and tilt the decision surface with your hand, or run real gradient descent, and watch the loss respond.",
   mission: "Get binary cross-entropy loss below 0.15, by hand or by training.",
 };
 
+const HANDLE_SCALE = 0.6; // world units per unit of w1/w2
+const HANDLE_Y = 1.25;
+
 function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 function buildDataset(seed = 3) {
   const rand = seededRandom(seed);
@@ -68,6 +72,17 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   grid.position.y = -0.81;
   stage.scene.add(grid);
 
+  const handle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 20, 20),
+    new THREE.MeshStandardMaterial({ color: 0x7ee3ff, emissive: 0x7ee3ff, emissiveIntensity: 0.6, roughness: 0.25 })
+  );
+  handle.position.set(w.w1 * HANDLE_SCALE, HANDLE_Y, w.w2 * HANDLE_SCALE);
+  stage.scene.add(handle);
+
+  const guideGeo = new THREE.BufferGeometry().setFromPoints([handle.position, handle.position]);
+  const guideLine = new THREE.Line(guideGeo, new THREE.LineDashedMaterial({ color: 0x7ee3ff, dashSize: 0.1, gapSize: 0.08, transparent: true, opacity: 0.55 }));
+  stage.scene.add(guideLine);
+
   const pointsGroup = new THREE.Group();
   stage.scene.add(pointsGroup);
   const markers = data.map((pt) => {
@@ -111,6 +126,13 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     surface.geometry.dispose();
     surface.geometry = buildSurfaceGeometry(w.w1, w.w2, w.b);
 
+    handle.position.set(w.w1 * HANDLE_SCALE, HANDLE_Y, w.w2 * HANDLE_SCALE);
+    const guidePositions = guideLine.geometry.attributes.position;
+    guidePositions.setXYZ(0, handle.position.x, handle.position.y, handle.position.z);
+    guidePositions.setXYZ(1, handle.position.x, -0.8, handle.position.z);
+    guidePositions.needsUpdate = true;
+    guideLine.computeLineDistances();
+
     markers.forEach(({ pt, sphere, line }) => {
       const p = sigmoid(w.w1 * pt.x + w.w2 * pt.z + w.b);
       const surfaceY = p * 1.6 - 0.8;
@@ -152,6 +174,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     </div>
     <div class="ctrl-group" id="nw-readouts" style="margin-top:16px;"></div>
     <div class="ctrl-note">Blue points are class 0, orange are class 1. Red connector lines show each point's error — they shrink as the neuron improves.</div>
+    <div class="ctrl-note">Grab the glowing cyan handle above the surface and drag it — its position directly sets w1 and w2, tilting the surface live.</div>
   `;
 
   ["w1", "w2", "b"].forEach((k) => {
@@ -169,11 +192,20 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     rebuild();
   });
 
+  const drag = makeDraggable(stage, () => [handle], {
+    onDrag(mesh, worldTarget) {
+      w.w1 = clamp(worldTarget.x / HANDLE_SCALE, -4, 4);
+      w.w2 = clamp(worldTarget.z / HANDLE_SCALE, -4, 4);
+      rebuild();
+    },
+  });
+
   rebuild();
   stage.start();
 
   return {
     dispose() {
+      drag.dispose();
       stage.dispose();
     },
   };

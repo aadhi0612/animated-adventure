@@ -1,16 +1,19 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, seededRandom } from "./stage.js";
+import { createStage, makeTextSprite, seededRandom, makeDraggable } from "./stage.js";
 
 export const meta = {
   id: "attention",
   icon: "🎭",
   title: "Attention Theater",
-  tagline: "Six tokens, real Q/K/V projections, real scaled dot-product attention. Flip the causal mask and watch future tokens go dark.",
-  mission: "Enable the causal mask so no token can attend to a token that comes after it.",
+  tagline: "Six tokens, real Q/K/V projections, real scaled dot-product attention. Pull the mask curtain down over the grid with your hand and watch future tokens go dark.",
+  mission: "Pull the curtain down (or enable the mask) so no token can attend to a token that comes after it.",
 };
 
 const TOKENS = ["The", "cat", "sat", "on", "the", "mat"];
 const DIM = 4;
+const CURTAIN_OPEN_Y = 4.5;
+const CURTAIN_CLOSED_Y = 0.55;
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 function randMatrix(rand, rows, cols) {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => (rand() - 0.5) * 2));
@@ -92,6 +95,18 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   stage.scene.add(floor);
 
   const state = { scale: true, causal: false, queryRow: 2 };
+
+  const curtain = new THREE.Mesh(
+    new THREE.PlaneGeometry(n * spacing + 4.5, n * spacing + 4.5),
+    new THREE.MeshStandardMaterial({ color: 0x7a2036, transparent: true, opacity: 0.38, side: THREE.DoubleSide, roughness: 0.6, emissive: 0x3a0f1a, emissiveIntensity: 0.4 })
+  );
+  curtain.rotation.x = -Math.PI / 2;
+  curtain.position.set(0, state.causal ? CURTAIN_CLOSED_Y : CURTAIN_OPEN_Y, 0);
+  stage.scene.add(curtain);
+
+  const curtainLabel = makeTextSprite("drag to mask", { color: "#ffb4c6", size: 26, scale: 0.4 });
+  curtainLabel.position.set(0, CURTAIN_OPEN_Y + 0.5, 0);
+  stage.scene.add(curtainLabel);
   const dark = new THREE.Color("#1c2340");
   const bright = new THREE.Color("#7ee3ff");
 
@@ -153,6 +168,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     </div>
     <div class="ctrl-group" id="at-readouts"></div>
     <div class="ctrl-note">Rows (cyan labels) are queries; columns (orange labels) are keys. Bar height and brightness both encode the real softmax attention weight for that pair.</div>
+    <div class="ctrl-note">The dark red curtain above the grid is draggable — pull it down to enable the causal mask, push it up to disable it.</div>
   `;
 
   function setToggle(onId, offId, val) {
@@ -162,8 +178,8 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
 
   controlsEl.querySelector("#at-scale-on").addEventListener("click", () => { state.scale = true; setToggle("at-scale-on", "at-scale-off", true); rebuild(); });
   controlsEl.querySelector("#at-scale-off").addEventListener("click", () => { state.scale = false; setToggle("at-scale-on", "at-scale-off", false); rebuild(); });
-  controlsEl.querySelector("#at-mask-on").addEventListener("click", () => { state.causal = true; setToggle("at-mask-on", "at-mask-off", true); rebuild(); });
-  controlsEl.querySelector("#at-mask-off").addEventListener("click", () => { state.causal = false; setToggle("at-mask-on", "at-mask-off", false); rebuild(); });
+  controlsEl.querySelector("#at-mask-on").addEventListener("click", () => { state.causal = true; curtain.position.y = CURTAIN_CLOSED_Y; setToggle("at-mask-on", "at-mask-off", true); rebuild(); });
+  controlsEl.querySelector("#at-mask-off").addEventListener("click", () => { state.causal = false; curtain.position.y = CURTAIN_OPEN_Y; setToggle("at-mask-on", "at-mask-off", false); rebuild(); });
 
   const rowSlider = controlsEl.querySelector("#at-row");
   const rowOut = controlsEl.querySelector("#at-row-out");
@@ -174,11 +190,26 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   });
   rowOut.textContent = TOKENS[state.queryRow];
 
+  const drag = makeDraggable(stage, () => [curtain], {
+    onDrag(mesh, worldTarget) {
+      mesh.position.y = clamp(worldTarget.y, CURTAIN_CLOSED_Y, CURTAIN_OPEN_Y);
+    },
+    onEnd(mesh) {
+      const mid = (CURTAIN_OPEN_Y + CURTAIN_CLOSED_Y) / 2;
+      const closed = mesh.position.y < mid;
+      mesh.position.y = closed ? CURTAIN_CLOSED_Y : CURTAIN_OPEN_Y;
+      state.causal = closed;
+      setToggle("at-mask-on", "at-mask-off", closed);
+      rebuild();
+    },
+  });
+
   rebuild();
   stage.start();
 
   return {
     dispose() {
+      drag.dispose();
       stage.dispose();
     },
   };

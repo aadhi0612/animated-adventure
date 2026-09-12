@@ -1,13 +1,21 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, seededRandom } from "./stage.js";
+import { createStage, makeTextSprite, seededRandom, makeDraggable } from "./stage.js";
 
 export const meta = {
   id: "generation",
   icon: "🎲",
   title: "Generation Lab",
-  tagline: "Real softmax over real logits. Move temperature, top-k and top-p and watch the probability distribution — and its entropy — respond live.",
+  tagline: "Real softmax over real logits. Grab the temperature dial and slide it by hand, or move top-k and top-p, and watch the distribution — and its entropy — respond live.",
   mission: "Tune the controls until entropy lands between 1.5 and 3.0 bits with at least 3 surviving candidates.",
 };
+
+const TEMP_MIN = 0.1;
+const TEMP_MAX = 2.0;
+const RAIL_BASE_Y = -0.5;
+const RAIL_TOP_Y = 3.0;
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function tempToY(t) { return RAIL_BASE_Y + ((t - TEMP_MIN) / (TEMP_MAX - TEMP_MIN)) * (RAIL_TOP_Y - RAIL_BASE_Y); }
+function yToTemp(y) { return TEMP_MIN + (clamp(y, RAIL_BASE_Y, RAIL_TOP_Y) - RAIL_BASE_Y) / (RAIL_TOP_Y - RAIL_BASE_Y) * (TEMP_MAX - TEMP_MIN); }
 
 const PROMPTS = {
   weather: {
@@ -55,7 +63,7 @@ function entropy(row) {
 }
 
 export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) {
-  const stage = createStage(canvasWrap, { cameraPos: [0, 5, 11], fov: 44 });
+  const stage = createStage(canvasWrap, { cameraPos: [-1.5, 4.5, 12], fov: 48 });
   const state = { promptKey: "weather", temperature: 1.0, topK: 12, topP: 1.0 };
   let seedCounter = 42;
 
@@ -66,6 +74,36 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   floor.position.y = -0.55;
   stage.scene.add(floor);
 
+  let railX = -6;
+  const rail = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.045, 0.045, RAIL_TOP_Y - RAIL_BASE_Y, 12),
+    new THREE.MeshStandardMaterial({ color: 0x2a3350, roughness: 0.6 })
+  );
+  rail.position.set(railX, (RAIL_BASE_Y + RAIL_TOP_Y) / 2, 0);
+  stage.scene.add(rail);
+
+  const handle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 20, 20),
+    new THREE.MeshStandardMaterial({ color: 0x7ee3ff, emissive: 0x7ee3ff, emissiveIntensity: 0.5, roughness: 0.3 })
+  );
+  stage.scene.add(handle);
+
+  const tempLabel = makeTextSprite("temperature", { color: "#c9d4e6", size: 24, scale: 0.34 });
+  tempLabel.position.set(railX, RAIL_TOP_Y + 0.4, 0);
+  stage.scene.add(tempLabel);
+
+  const cold = new THREE.Color("#4a7dff");
+  const hot = new THREE.Color("#ff5566");
+  function updateThermVisual() {
+    rail.position.x = railX;
+    handle.position.x = railX;
+    handle.position.y = tempToY(state.temperature);
+    tempLabel.position.x = railX;
+    const frac = (state.temperature - TEMP_MIN) / (TEMP_MAX - TEMP_MIN);
+    handle.material.color.copy(cold.clone().lerp(hot, frac));
+    handle.material.emissive.copy(handle.material.color);
+  }
+
   let bars = [];
   function buildBars() {
     barGroup.clear();
@@ -74,6 +112,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     const n = tokens.length;
     const spacing = 0.95;
     const offset = ((n - 1) * spacing) / 2;
+    railX = -offset - 1.1;
     tokens.forEach((tok, i) => {
       const geo = new THREE.BoxGeometry(0.55, 1, 0.55);
       const mat = new THREE.MeshStandardMaterial({ color: 0x223055, roughness: 0.4 });
@@ -100,6 +139,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   }
 
   function rebuild() {
+    updateThermVisual();
     const { tokens, final } = currentDistribution();
     final.forEach((p, i) => {
       const box = bars[i];
@@ -166,6 +206,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     </div>
     <div class="ctrl-group" id="gen-readouts" style="margin-top:16px;"></div>
     <div class="ctrl-note">P(token) = softmax(logits / T), then top-k keeps the k highest-probability tokens, then top-p keeps the smallest set whose cumulative probability reaches p.</div>
+    <div class="ctrl-note">Grab the glowing dial to the left of the bars and slide it up or down — that's the same temperature value as the slider, just by hand.</div>
   `;
 
   const tempSlider = controlsEl.querySelector("#gen-temp");
@@ -197,6 +238,16 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   controlsEl.querySelector("#gen-prompt-weather").addEventListener("click", () => selectPrompt("weather"));
   controlsEl.querySelector("#gen-prompt-lang").addEventListener("click", () => selectPrompt("lang"));
 
+  const drag = makeDraggable(stage, () => [handle], {
+    onDrag(mesh, worldTarget) {
+      const y = clamp(worldTarget.y, RAIL_BASE_Y, RAIL_TOP_Y);
+      state.temperature = yToTemp(y);
+      tempSlider.value = state.temperature;
+      syncOutputs();
+      rebuild();
+    },
+  });
+
   syncOutputs();
   buildBars();
   rebuild();
@@ -204,6 +255,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
 
   return {
     dispose() {
+      drag.dispose();
       stage.dispose();
     },
   };
