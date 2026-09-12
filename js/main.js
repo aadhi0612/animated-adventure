@@ -56,6 +56,7 @@ document.getElementById("footerName").textContent = SITE.name;
 document.getElementById("year").textContent = new Date().getFullYear();
 document.getElementById("contactLinks").innerHTML = `
   <a class="btn btn-primary" href="mailto:${SITE.email}">Email me</a>
+  <a class="btn btn-ghost" href="${SITE.links.site}" target="_blank" rel="noopener noreferrer">Portfolio</a>
   <a class="btn btn-ghost" href="${SITE.links.github}" target="_blank" rel="noopener noreferrer">GitHub</a>
   <a class="btn btn-ghost" href="${SITE.links.linkedin}" target="_blank" rel="noopener noreferrer">LinkedIn</a>
 `;
