@@ -32,11 +32,27 @@ export function createStage(container, { cameraPos = [0, 3, 8], fov = 45, contro
     orbit.maxDistance = 26;
   }
 
+  // Every lab's camera/fov was tuned by eye against a landscape-ish canvas.
+  // On a narrow/portrait viewport (phones, the stacked mobile lab layout)
+  // that same vertical fov gives much LESS horizontal field of view, so
+  // wide scene content (a token row, a temperature dial off to one side)
+  // gets clipped or pushed to the very edge. Instead of a fixed vertical
+  // fov, keep the HORIZONTAL fov constant relative to a landscape
+  // reference aspect and derive the vertical fov from it — desktop is
+  // unaffected (aspect stays >= reference), narrow viewports automatically
+  // zoom out vertically to keep the same horizontal framing.
+  const REFERENCE_ASPECT = 1.5;
+  const targetHorizontalFov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(fov) / 2) * REFERENCE_ASPECT);
+
   function resize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
     if (w === 0 || h === 0) return;
-    camera.aspect = w / h;
+    const aspect = w / h;
+    camera.aspect = aspect;
+    camera.fov = aspect < REFERENCE_ASPECT
+      ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(targetHorizontalFov / 2) / aspect))
+      : fov;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
