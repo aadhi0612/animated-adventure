@@ -8,7 +8,7 @@ import * as attention from "./labs/attention.js";
 import * as generation from "./labs/generation.js";
 
 const LABS = [tokenizer, vectors, neuron, attention, generation];
-const PROGRESS_KEY = "ai-lab-progress-v1";
+const PROGRESS_KEY = "ai-lab-progress-v2";
 
 function loadProgress() {
   try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch { return {}; }
@@ -17,6 +17,19 @@ function saveProgress(p) {
   try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch { /* private mode: ignore */ }
 }
 let progress = loadProgress();
+function entryFor(id) { return progress[id] || { complete: false, score: 0, best: 0 }; }
+// Room 0 is always open; each further room unlocks once the one before it
+// has been cleared at least once (mastery is sticky — clearing never re-locks).
+function isUnlocked(i) { return i === 0 || entryFor(LABS[i - 1].meta.id).complete; }
+
+let toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
+}
 
 /* ---------------- Header / nav ---------------- */
 const navToggle = document.getElementById("navToggle");
@@ -79,21 +92,55 @@ newsGrid.innerHTML = NEWS.map(
 
 /* ---------------- Lab grid ---------------- */
 const labGrid = document.getElementById("labGrid");
-function progressPercent(id) { return progress[id] ? 100 : 0; }
+const progressStrip = document.getElementById("labProgressStrip");
+
+function renderProgressStrip() {
+  const cleared = LABS.filter((m) => entryFor(m.meta.id).complete).length;
+  const totalScore = LABS.reduce((s, m) => s + entryFor(m.meta.id).best, 0);
+  const maxScore = LABS.length * 100;
+  progressStrip.innerHTML = `
+    <span><b>${cleared}</b> / ${LABS.length} rooms cleared</span>
+    <div class="lab-progress-bar-outer"><span style="width:${(cleared / LABS.length) * 100}%"></span></div>
+    <span><b>${totalScore}</b> / ${maxScore} points</span>
+  `;
+}
+
 function renderLabGrid() {
-  labGrid.innerHTML = LABS.map(
-    (mod, i) => `
-    <button class="lab-card reveal in" data-lab="${mod.meta.id}">
+  labGrid.innerHTML = LABS.map((mod, i) => {
+    const entry = entryFor(mod.meta.id);
+    const unlocked = isUnlocked(i);
+    const cta = !unlocked ? "Locked" : entry.complete ? "Replay →" : "Enter →";
+    return `
+    <button class="lab-card reveal in${entry.complete ? " is-complete" : ""}${!unlocked ? " is-locked" : ""}"
+            data-lab="${mod.meta.id}" ${!unlocked ? 'aria-disabled="true"' : ""}>
+      ${!unlocked ? '<span class="lab-card-lock" aria-hidden="true">🔒</span>' : ""}
       <span class="lab-card-index">ROOM ${String(i + 1).padStart(2, "0")}</span>
       <h3>${mod.meta.icon} ${mod.meta.title}</h3>
-      <p>${mod.meta.tagline}</p>
-      <div class="lab-card-meta"><span>Mission</span><span class="lab-card-cta">Enter →</span></div>
-      <div class="lab-card-progress"><span style="width:${progressPercent(mod.meta.id)}%"></span></div>
-    </button>`
-  ).join("");
+      <p>${unlocked ? mod.meta.tagline : `Clear Room ${String(i).padStart(2, "0")} to unlock this room.`}</p>
+      <div class="lab-card-meta">
+        <span class="lab-card-score">${unlocked ? `Best: ${entry.best}` : ""}</span>
+        <span class="lab-card-cta">${cta}</span>
+      </div>
+      <div class="lab-card-progress"><span style="width:${unlocked ? entry.best : 0}%"></span></div>
+    </button>`;
+  }).join("");
+
   labGrid.querySelectorAll(".lab-card").forEach((btn) => {
-    btn.addEventListener("click", () => openLab(btn.dataset.lab));
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.lab;
+      const i = LABS.findIndex((m) => m.meta.id === id);
+      if (!isUnlocked(i)) {
+        btn.classList.remove("shake");
+        void btn.offsetWidth;
+        btn.classList.add("shake");
+        showToast(`Locked — clear Room ${String(i).padStart(2, "0")} first.`);
+        return;
+      }
+      openLab(id);
+    });
   });
+
+  renderProgressStrip();
 }
 renderLabGrid();
 
@@ -124,19 +171,37 @@ function openLab(id) {
   overlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
 
+  const labIndex = LABS.findIndex((m) => m.meta.id === id);
+
   const api = mod.init({
     canvasWrap: labCanvasWrap,
     controlsEl: labControls,
     statusEl: labStatus,
     setStatus: (msg) => { labStatus.textContent = msg; },
-    setMissionComplete: (done) => {
-      const changed = progress[id] !== done;
-      progress[id] = done;
-      if (changed) saveProgress(progress);
+    setMissionComplete: (done, score = done ? 100 : 0) => {
+      const entry = entryFor(id);
+      const wasComplete = entry.complete;
+      const prevBest = entry.best;
+      const clampedScore = Math.max(0, Math.min(100, Math.round(score)));
+      entry.complete = wasComplete || done; // mastery is sticky, never re-locks
+      entry.score = clampedScore;
+      entry.best = Math.max(entry.best, clampedScore);
+      progress[id] = entry;
+      saveProgress(progress);
+
       const box = labControls.querySelector(".mission-box");
       if (box) box.classList.toggle("done", done);
-      const card = labGrid.querySelector(`[data-lab="${id}"] .lab-card-progress span`);
-      if (card) card.style.width = done ? "100%" : "0%";
+
+      if (entry.best !== prevBest || entry.complete !== wasComplete) renderLabGrid();
+
+      if (!wasComplete && entry.complete) {
+        const next = LABS[labIndex + 1];
+        showToast(
+          next
+            ? `Room ${String(labIndex + 1).padStart(2, "0")} cleared — Room ${String(labIndex + 2).padStart(2, "0")} "${next.meta.title}" unlocked!`
+            : `Room ${String(labIndex + 1).padStart(2, "0")} cleared — all rooms complete!`
+        );
+      }
     },
   });
 

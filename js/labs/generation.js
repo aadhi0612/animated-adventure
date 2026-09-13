@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, seededRandom, makeDraggable } from "./stage.js";
+import { createStage, makeTextSprite, seededRandom, makeDraggable, celebrate } from "./stage.js";
 
 export const meta = {
   id: "generation",
@@ -66,6 +66,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   const stage = createStage(canvasWrap, { cameraPos: [-1.5, 4.5, 12], fov: 48 });
   const state = { promptKey: "weather", temperature: 1.0, topK: 12, topP: 1.0 };
   let seedCounter = 42;
+  let wasComplete = false;
 
   const barGroup = new THREE.Group();
   stage.scene.add(barGroup);
@@ -155,7 +156,13 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
     const ent = entropy(final);
     const surviving = final.filter((p) => p > 1e-9).length;
     const complete = ent >= 1.5 && ent <= 3.0 && surviving >= 3;
-    setMissionComplete(complete);
+    const center = 2.25;
+    const score = complete
+      ? Math.max(60, Math.min(100, Math.round(100 - (Math.abs(ent - center) / 0.75) * 40)))
+      : Math.max(0, Math.min(50, Math.round(30 - Math.abs(ent - center) * 8)));
+    setMissionComplete(complete, score);
+    if (complete && !wasComplete) celebrate(stage, handle.position.clone());
+    wasComplete = complete;
 
     const top3 = final.map((p, i) => ({ p, tok: tokens[i] })).sort((a, b) => b.p - a.p).slice(0, 3);
     controlsEl.querySelector("#gen-readouts").innerHTML = `

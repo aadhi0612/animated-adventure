@@ -1,12 +1,12 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, makeDraggable } from "./stage.js";
+import { createStage, makeTextSprite, makeDraggable, celebrate } from "./stage.js";
 
 export const meta = {
   id: "tokenizer",
   icon: "🔤",
   title: "Token Forge",
   tagline: "Watch a real byte-pair-encoding tokenizer merge characters into subwords — then grab two token blocks and merge them yourself, by hand.",
-  mission: "Compress the sentence to at least 3 characters per token — using the slider, hand-merges, or both.",
+  mission: "Compress the sentence to at least 2 characters per token — using the slider, hand-merges, or both. Push past that by hand for a higher score.",
 };
 
 function hashHue(str) {
@@ -25,11 +25,16 @@ export function trainBPE(text, numMerges) {
   let wordSymbols = words.map((w) => [...w.split(""), "</w>"]);
   const merges = [];
 
+  // Symbols can be multi-character once merged (e.g. "th"), so pair keys
+  // need an unambiguous delimiter — joining with "" and re-splitting would
+  // mis-parse a merged pair like "th"+"e" back into "t"+"he".
+  const PAIR_SEP = "";
+
   for (let m = 0; m < numMerges; m++) {
     const pairCounts = new Map();
     for (const symbols of wordSymbols) {
       for (let i = 0; i < symbols.length - 1; i++) {
-        const pair = symbols[i] + "" + symbols[i + 1];
+        const pair = symbols[i] + PAIR_SEP + symbols[i + 1];
         pairCounts.set(pair, (pairCounts.get(pair) || 0) + 1);
       }
     }
@@ -42,7 +47,7 @@ export function trainBPE(text, numMerges) {
       }
     }
     if (!bestPair) break;
-    const [a, b] = bestPair.split("");
+    const [a, b] = bestPair.split(PAIR_SEP);
     merges.push([a, b, bestCount]);
     wordSymbols = wordSymbols.map((symbols) => {
       const merged = [];
@@ -115,6 +120,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   const MERGE_THRESHOLD = 0.55;
   const BASE_EMISSIVE = 0.12;
   const HOVER_EMISSIVE = 0.7;
+  let wasComplete = false;
 
   function rebuild() {
     tokenGroup.clear();
@@ -169,9 +175,15 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
 
     const charCount = state.text.length;
     const avgChars = tokens.length ? charCount / tokens.length : 0;
-    const target = 3;
+    const target = 2;
     const complete = tokens.length > 0 && avgChars >= target;
-    setMissionComplete(complete);
+    const totalMergeActions = state.merges + state.manualMerges.length;
+    const score = complete
+      ? Math.max(40, Math.min(100, 100 - totalMergeActions * 3))
+      : Math.min(55, Math.round((avgChars / target) * 60));
+    setMissionComplete(complete, score);
+    if (complete && !wasComplete) celebrate(stage, new THREE.Vector3(0, 1.4, 0));
+    wasComplete = complete;
 
     controlsEl.querySelector("#tf-readouts").innerHTML = `
       <div class="readout"><span>Characters</span><b>${charCount}</b></div>

@@ -140,6 +140,37 @@ main > section { max-width: var(--maxw); margin: 0 auto; padding: 100px 24px; }
 .lab-card-progress { width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 3px; margin-top: 14px; overflow: hidden; }
 .lab-card-progress span { display: block; height: 100%; background: var(--grad); width: 0%; transition: width 400ms var(--ease); }
 
+.lab-card-score { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 700; }
+.lab-card.is-complete { border-color: rgba(126,227,255,0.4); background: linear-gradient(160deg, rgba(126,227,255,0.06), rgba(255,255,255,0.03)); }
+.lab-card.is-complete .lab-card-index::after { content: " · CLEARED"; color: var(--accent); }
+
+.lab-card.is-locked { cursor: not-allowed; opacity: 0.5; }
+.lab-card.is-locked:hover { transform: none; border-color: var(--panel-border); }
+.lab-card.is-locked:hover::before { opacity: 0; }
+.lab-card-lock { position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); font-size: 0.95rem; }
+.lab-card.shake { animation: cardShake 420ms ease; }
+@keyframes cardShake { 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
+
+/* ===================== Progress strip ===================== */
+.lab-progress-strip {
+  display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+  padding: 18px 22px; border-radius: 16px; background: var(--panel); border: 1px solid var(--panel-border);
+  margin-bottom: 24px; font-size: 0.88rem; color: var(--text-dim);
+}
+.lab-progress-strip b { color: var(--text); font-variant-numeric: tabular-nums; }
+.lab-progress-bar-outer { flex: 1; min-width: 140px; height: 6px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.lab-progress-bar-outer span { display: block; height: 100%; background: var(--grad); width: 0%; transition: width 500ms var(--ease); }
+
+/* ===================== Toast ===================== */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px);
+  background: var(--bg-alt); border: 1px solid rgba(126,227,255,0.4); color: var(--text);
+  padding: 13px 22px; border-radius: 999px; font-size: 0.88rem; font-weight: 600;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.35); z-index: 300;
+  opacity: 0; pointer-events: none; transition: opacity 280ms var(--ease), transform 280ms var(--ease);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
 /* ===================== About ===================== */
 .about-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: start; }
 .about-bio { color: var(--text-dim); font-size: 1.05rem; line-height: 1.7; margin: 0 0 22px; }

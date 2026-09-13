@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, seededRandom, makeDraggable } from "./stage.js";
+import { createStage, makeTextSprite, seededRandom, makeDraggable, celebrate } from "./stage.js";
 
 export const meta = {
   id: "vectors",
@@ -104,6 +104,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   const hintEl = controlsEl.querySelector("#vec-hint");
 
   let selected = null;
+  let wasComplete = false;
   function selectNode(node) {
     if (selected) selected.mesh.scale.setScalar(1);
     selected = node;
@@ -131,7 +132,13 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
         .join("");
 
     const topNeighborDifferentCategory = top.length > 0 && top[0].n.data.category !== node.data.category;
-    setMissionComplete(topNeighborDifferentCategory);
+    const topSim = top[0] ? top[0].sim : 0;
+    const score = topNeighborDifferentCategory
+      ? Math.max(60, Math.min(100, Math.round(60 + topSim * 40)))
+      : Math.max(0, Math.min(55, Math.round(topSim * 40)));
+    setMissionComplete(topNeighborDifferentCategory, score);
+    if (topNeighborDifferentCategory && !wasComplete) celebrate(stage, node.mesh.getWorldPosition(new THREE.Vector3()));
+    wasComplete = topNeighborDifferentCategory;
     setStatus(
       topNeighborDifferentCategory
         ? `Mission complete — you dragged "${node.data.word}" close enough that "${top[0].n.data.word}" (${top[0].n.data.category}) is now its nearest neighbor.`

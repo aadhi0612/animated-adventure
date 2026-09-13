@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createStage, makeTextSprite, seededRandom, makeDraggable } from "./stage.js";
+import { createStage, makeTextSprite, seededRandom, makeDraggable, celebrate } from "./stage.js";
 
 export const meta = {
   id: "attention",
@@ -95,6 +95,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   stage.scene.add(floor);
 
   const state = { scale: true, causal: false, queryRow: 2 };
+  let wasComplete = false;
 
   const curtain = new THREE.Mesh(
     new THREE.PlaneGeometry(n * spacing + 4.5, n * spacing + 4.5),
@@ -138,7 +139,10 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
       <div class="readout"><span>Attends to future tokens?</span><b>${futureLeak ? "yes" : "no"}</b></div>
     `;
 
-    setMissionComplete(state.causal);
+    const score = state.causal ? (state.scale ? 100 : 85) : 0;
+    setMissionComplete(state.causal, score);
+    if (state.causal && !wasComplete) celebrate(stage, new THREE.Vector3(0, 1, 0));
+    wasComplete = state.causal;
     setStatus(
       state.causal
         ? "Mission complete — causal mask on: every row's future columns are exactly zero."

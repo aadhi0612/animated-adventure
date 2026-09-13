@@ -152,6 +152,54 @@ export function colorForIndex(i, n) {
   return new THREE.Color(`hsl(${hue}, 70%, 62%)`);
 }
 
+// A short particle-burst reward, played once when a mission flips from
+// incomplete to complete. Added directly to stage.scene (world space) so
+// it's unaffected by any rotating group a lab may parent its content to.
+export function celebrate(stage, position = new THREE.Vector3(0, 0, 0), { color = 0xffd76a, count = 46, duration = 900 } = {}) {
+  const positions = new Float32Array(count * 3);
+  const velocities = [];
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = position.x;
+    positions[i * 3 + 1] = position.y;
+    positions[i * 3 + 2] = position.z;
+    velocities.push(
+      new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+        .normalize()
+        .multiplyScalar(1.5 + Math.random() * 2.5)
+    );
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    color, size: 0.14, transparent: true, opacity: 1,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const points = new THREE.Points(geo, mat);
+  stage.scene.add(points);
+
+  const start = performance.now();
+  function tick() {
+    const t = (performance.now() - start) / duration;
+    if (t >= 1) {
+      stage.scene.remove(points);
+      geo.dispose();
+      mat.dispose();
+      const idx = stage.onFrame.indexOf(tick);
+      if (idx >= 0) stage.onFrame.splice(idx, 1);
+      return;
+    }
+    const arr = geo.attributes.position.array;
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] += velocities[i].x * 0.02;
+      arr[i * 3 + 1] += velocities[i].y * 0.02 - 0.012;
+      arr[i * 3 + 2] += velocities[i].z * 0.02;
+    }
+    geo.attributes.position.needsUpdate = true;
+    mat.opacity = 1 - t;
+  }
+  stage.onFrame.push(tick);
+}
+
 // Makes a set of meshes grabbable with the mouse/touch: pointerdown on a
 // target starts a drag, movement is projected onto a plane facing the camera
 // through the object's current position (so it tracks naturally under the

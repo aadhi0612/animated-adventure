@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createStage, seededRandom, makeDraggable } from "./stage.js";
+import { createStage, seededRandom, makeDraggable, celebrate } from "./stage.js";
 
 export const meta = {
   id: "neuron",
@@ -63,6 +63,7 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
   const data = buildDataset();
 
   let w = { w1: 0.1, w2: 0.1, b: 0 };
+  let wasComplete = false;
 
   const surfaceMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
   let surface = new THREE.Mesh(buildSurfaceGeometry(w.w1, w.w2, w.b), surfaceMat);
@@ -144,7 +145,10 @@ export function init({ canvasWrap, controlsEl, setStatus, setMissionComplete }) 
 
     const { loss, acc } = computeLossAndAccuracy();
     const complete = loss < 0.15;
-    setMissionComplete(complete);
+    const score = Math.max(0, Math.min(100, Math.round(((0.7 - loss) / 0.7) * 100)));
+    setMissionComplete(complete, score);
+    if (complete && !wasComplete) celebrate(stage, handle.position.clone());
+    wasComplete = complete;
 
     ["w1", "w2", "b"].forEach((k) => {
       controlsEl.querySelector(`#nw-${k}`).value = w[k];
