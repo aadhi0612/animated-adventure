@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "jev": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@jkudish/jev-mcp"],
+      "env": {
+        "TYPESAFE_API_KEY": "${TYPESAFE_API_KEY:-}"
+      }
+    },
+    "laya": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--from", "laya-mcp[mcp]", "laya-mcp", "mcp"]
+    }
+  }
+}
